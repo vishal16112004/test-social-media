@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
     doc,
     getDoc,
@@ -21,6 +21,7 @@ import EditProfileModal from "../components/EditProfileModal";
 
 export default function Profile() {
     const { uid } = useParams();
+    const navigate = useNavigate();
     const { user: currentUser } = useAuth();
     const [profile, setProfile] = useState(null);
     const [posts, setPosts] = useState([]);
@@ -67,6 +68,36 @@ export default function Profile() {
             setIsEditModalOpen(true);
         }
     }, [uid, currentUser]);
+
+    const handleMessage = async () => {
+        if (!currentUser) return;
+
+        try {
+            // Check if chat already exists
+            const q = query(
+                collection(db, "chats"),
+                where("participants", "array-contains", currentUser.uid)
+            );
+            const snapshot = await getDocs(q);
+            const existingChat = snapshot.docs.find(doc =>
+                doc.data().participants.includes(uid)
+            );
+
+            if (existingChat) {
+                navigate(`/chat/${existingChat.id}`);
+            } else {
+                // Create new chat
+                const newChatRef = await addDoc(collection(db, "chats"), {
+                    participants: [currentUser.uid, uid],
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+                navigate(`/chat/${newChatRef.id}`);
+            }
+        } catch (error) {
+            console.error("Error starting chat:", error);
+        }
+    };
 
     const handleFollow = async () => {
         if (!currentUser) return;
@@ -140,13 +171,21 @@ export default function Profile() {
                                 Edit Profile
                             </button>
                         ) : (
-                            <button
-                                onClick={handleFollow}
-                                className={`px-6 py-1.5 rounded font-bold text-sm transition-colors ${isFollowing ? "bg-gray-800 text-white" : "bg-blue-500 text-white hover:bg-blue-600"
-                                    }`}
-                            >
-                                {isFollowing ? "Following" : "Follow"}
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleFollow}
+                                    className={`px-6 py-1.5 rounded font-bold text-sm transition-colors ${isFollowing ? "bg-gray-800 text-white" : "bg-blue-500 text-white hover:bg-blue-600"
+                                        }`}
+                                >
+                                    {isFollowing ? "Following" : "Follow"}
+                                </button>
+                                <button
+                                    onClick={handleMessage}
+                                    className="px-6 py-1.5 bg-gray-800 text-white rounded font-bold text-sm hover:bg-gray-700"
+                                >
+                                    Message
+                                </button>
+                            </div>
                         )}
                         {currentUser?.uid === uid && <Settings className="cursor-pointer" />}
                     </div>

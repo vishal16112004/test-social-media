@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Search, PlusSquare, Heart, User, LogOut } from "lucide-react";
+import { Home, Search, PlusSquare, Heart, User, LogOut, MessageCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { auth } from "../lib/firebase";
 
@@ -11,6 +11,7 @@ export default function Layout({ children }) {
         { icon: Home, label: "Home", path: "/" },
         { icon: Search, label: "Search", path: "/search" },
         { icon: PlusSquare, label: "Create", path: "/create" },
+        { icon: MessageCircle, label: "Messages", path: "/chat" },
         { icon: Heart, label: "Notifications", path: "/notifications" },
         { icon: User, label: "Profile", path: `/profile/${user?.uid}` },
     ];

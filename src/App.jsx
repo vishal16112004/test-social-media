@@ -8,6 +8,7 @@ import CreatePost from "./pages/CreatePost";
 import Profile from "./pages/Profile";
 import Search from "./pages/Search";
 import Notifications from "./pages/Notifications";
+import Chat from "./pages/Chat";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -75,6 +76,16 @@ export default function App() {
           <Route path="/notifications" element={
             <PrivateRoute>
               <Notifications />
+            </PrivateRoute>
+          } />
+          <Route path="/chat" element={
+            <PrivateRoute>
+              <Chat />
+            </PrivateRoute>
+          } />
+          <Route path="/chat/:chatId" element={
+            <PrivateRoute>
+              <Chat />
             </PrivateRoute>
           } />
           <Route path="*" element={<Navigate to="/" />} />
