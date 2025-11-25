@@ -14,7 +14,19 @@ function PrivateRoute({ children }) {
 
   if (loading) return <div className="flex h-screen items-center justify-center bg-black text-white">Loading...</div>;
 
-  return user ? <Layout>{children}</Layout> : <Navigate to="/login" />;
+  if (!user) return <Navigate to="/login" />;
+
+  // Check if profile is complete
+  if (user.isProfileComplete === false) {
+    // If not complete, redirect to profile page with setup param
+    // But allow access to the profile page itself to avoid infinite loop
+    const isProfilePage = window.location.pathname.startsWith(`/profile/${user.uid}`);
+    if (!isProfilePage) {
+      return <Navigate to={`/profile/${user.uid}?setup=true`} />;
+    }
+  }
+
+  return <Layout>{children}</Layout>;
 }
 
 function PublicRoute({ children }) {

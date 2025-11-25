@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../lib/firebase";
 
 const AuthContext = createContext();
 
@@ -9,8 +10,22 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setUser(user);
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists()) {
+                        setUser({ ...user, ...userDoc.data() });
+                    } else {
+                        setUser(user);
+                    }
+                } catch (error) {
+                    console.error("Error fetching user data:", error);
+                    setUser(user);
+                }
+            } else {
+                setUser(null);
+            }
             setLoading(false);
         });
 

@@ -10,11 +10,14 @@ import {
     getDocs,
     updateDoc,
     arrayUnion,
-    arrayRemove
+    arrayRemove,
+    addDoc,
+    serverTimestamp
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 import { Loader2, Settings } from "lucide-react";
+import EditProfileModal from "../components/EditProfileModal";
 
 export default function Profile() {
     const { uid } = useParams();
@@ -23,6 +26,8 @@ export default function Profile() {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isFollowing, setIsFollowing] = useState(false);
+
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     useEffect(() => {
         async function fetchProfile() {
@@ -35,13 +40,16 @@ export default function Profile() {
                 }
 
                 // Fetch user posts
+                // Fetch user posts
                 const q = query(
                     collection(db, "posts"),
-                    where("userId", "==", uid),
-                    orderBy("createdAt", "desc")
+                    where("userId", "==", uid)
                 );
                 const postsSnapshot = await getDocs(q);
-                setPosts(postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                const postsData = postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Sort client-side to avoid composite index requirement
+                postsData.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds);
+                setPosts(postsData);
             } catch (error) {
                 console.error("Error fetching profile:", error);
             } finally {
@@ -51,6 +59,12 @@ export default function Profile() {
 
         if (uid) {
             fetchProfile();
+        }
+
+        // Check for setup param
+        const searchParams = new URLSearchParams(window.location.search);
+        if (searchParams.get("setup") === "true" && currentUser?.uid === uid) {
+            setIsEditModalOpen(true);
         }
     }, [uid, currentUser]);
 
@@ -70,6 +84,22 @@ export default function Profile() {
             await updateDoc(currentUserRef, { following: arrayUnion(uid) });
             setIsFollowing(true);
             setProfile(prev => ({ ...prev, followers: [...(prev.followers || []), currentUser.uid] }));
+
+            // Create Notification
+            if (currentUser.uid !== uid) {
+                await addDoc(collection(db, "notifications"), {
+                    recipientId: uid,
+                    senderId: currentUser.uid,
+                    type: "follow",
+                    message: `${currentUser.displayName || currentUser.username} started following you`,
+                    createdAt: serverTimestamp(),
+                    read: false,
+                    sender: {
+                        username: currentUser.username,
+                        photoURL: currentUser.photoURL
+                    }
+                });
+            }
         }
     };
 
@@ -103,7 +133,10 @@ export default function Profile() {
                     <div className="flex flex-col md:flex-row items-center gap-4 mb-4">
                         <h1 className="text-2xl font-light">{profile.username}</h1>
                         {currentUser?.uid === uid ? (
-                            <button className="px-4 py-1.5 bg-gray-800 rounded font-bold text-sm hover:bg-gray-700">
+                            <button
+                                onClick={() => setIsEditModalOpen(true)}
+                                className="px-4 py-1.5 bg-gray-800 rounded font-bold text-sm hover:bg-gray-700"
+                            >
                                 Edit Profile
                             </button>
                         ) : (
@@ -150,6 +183,21 @@ export default function Profile() {
                     </div>
                 )}
             </div>
+
+            <EditProfileModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    // Prevent closing if in setup mode
+                    const searchParams = new URLSearchParams(window.location.search);
+                    if (searchParams.get("setup") !== "true") {
+                        setIsEditModalOpen(false);
+                    }
+                }}
+                currentUser={currentUser}
+                profileData={profile}
+                onUpdate={(updates) => setProfile(prev => ({ ...prev, ...updates }))}
+                isSetupMode={new URLSearchParams(window.location.search).get("setup") === "true"}
+            />
         </div>
     );
 }

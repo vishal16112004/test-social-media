@@ -48,7 +48,8 @@ export default function Signup() {
                 photoURL: "",
                 bio: "",
                 followers: [],
-                following: []
+                following: [],
+                isProfileComplete: false
             });
 
             navigate("/");
@@ -90,7 +91,8 @@ export default function Signup() {
                     photoURL: user.photoURL,
                     bio: "",
                     followers: [],
-                    following: []
+                    following: [],
+                    isProfileComplete: false
                 });
             }
 

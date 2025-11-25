@@ -77,6 +77,23 @@ export default function Post({ post }) {
             createdAt: serverTimestamp()
         });
 
+        // Create Notification
+        if (user.uid !== post.userId) {
+            await addDoc(collection(db, "notifications"), {
+                recipientId: post.userId,
+                senderId: user.uid,
+                type: "comment",
+                postId: post.id,
+                message: `${user.displayName || user.username} commented: ${newComment}`,
+                createdAt: serverTimestamp(),
+                read: false,
+                sender: {
+                    username: user.username,
+                    photoURL: user.photoURL
+                }
+            });
+        }
+
         setNewComment("");
     };
 
