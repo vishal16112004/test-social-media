@@ -112,7 +112,14 @@ export default function Chat() {
         }
 
         const chat = chats.find(c => c.id === chatId);
-        if (chat) setActiveChat(chat);
+        if (chat) {
+            setActiveChat(chat);
+            // Reset unread count for current user
+            if (chat.unreadCounts?.[user.uid] > 0) {
+                const unreadCounts = { ...chat.unreadCounts, [user.uid]: 0 };
+                updateDoc(doc(db, "chats", chatId), { unreadCounts });
+            }
+        }
 
         const q = query(
             collection(db, "chats", chatId, "messages")
@@ -147,10 +154,18 @@ export default function Chat() {
             // Add message to subcollection
             await addDoc(collection(db, "chats", chatId, "messages"), messageData);
 
-            // Update chat document with last message
+            // Update chat document with last message and unread count
+            const chatDoc = await getDoc(doc(db, "chats", chatId));
+            const chatData = chatDoc.data();
+            const recipientId = chatData.participants.find(id => id !== user.uid);
+
+            const unreadCounts = chatData.unreadCounts || {};
+            unreadCounts[recipientId] = (unreadCounts[recipientId] || 0) + 1;
+
             await updateDoc(doc(db, "chats", chatId), {
                 lastMessage: messageData,
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
+                unreadCounts
             });
 
             setNewMessage("");
@@ -212,12 +227,17 @@ export default function Chat() {
                                 )}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <div className="font-bold truncate">{chat.otherUser.username}</div>
-                                <div className="text-sm text-gray-500 truncate">
+                                <div className={`truncate ${chat.unreadCounts?.[user.uid] > 0 ? "font-bold text-white" : "font-semibold text-gray-200"}`}>
+                                    {chat.otherUser.username}
+                                </div>
+                                <div className={`text-sm truncate ${chat.unreadCounts?.[user.uid] > 0 ? "font-bold text-white" : "text-gray-500"}`}>
                                     {chat.lastMessage?.senderId === user.uid ? "You: " : ""}
                                     {chat.lastMessage?.text || "Started a chat"}
                                 </div>
                             </div>
+                            {chat.unreadCounts?.[user.uid] > 0 && (
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            )}
                             {chat.updatedAt && (
                                 <div className="text-xs text-gray-500 whitespace-nowrap">
                                     {formatDistanceToNow(new Date(chat.updatedAt.seconds * 1000), { addSuffix: false }).replace("about ", "")}

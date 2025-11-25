@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, updateDoc, doc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 import { formatDistanceToNow } from "date-fns";
@@ -25,6 +25,12 @@ export default function Notifications() {
             data.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds);
             setNotifications(data);
             setLoading(false);
+
+            // Mark unread notifications as read
+            const unreadNotifications = snapshot.docs.filter(doc => !doc.data().read);
+            unreadNotifications.forEach(docSnapshot => {
+                updateDoc(doc(db, "notifications", docSnapshot.id), { read: true });
+            });
         });
 
         return () => unsubscribe();
