@@ -28,7 +28,7 @@ export default function Home() {
     }
 
     return (
-        <div className="max-w-xl mx-auto py-8 px-4">
+        <div className="max-w-xl mx-auto py-4 md:py-8 px-0 md:px-4">
             {posts.length === 0 ? (
                 <div className="text-center text-gray-500 mt-10">
                     <p className="text-xl mb-4">No posts yet</p>

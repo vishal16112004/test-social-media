@@ -149,56 +149,65 @@ export default function Profile() {
     return (
         <div className="max-w-4xl mx-auto p-4 md:p-8">
             {/* Header */}
-            <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
-                <div className="w-32 h-32 md:w-40 md:h-40 bg-gray-800 rounded-full overflow-hidden flex-shrink-0">
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-8 md:mb-12">
+                <div className="w-24 h-24 md:w-40 md:h-40 bg-gray-800 rounded-full overflow-hidden flex-shrink-0 border-2 border-black">
                     {profile.photoURL ? (
                         <img src={profile.photoURL} alt={profile.username} className="w-full h-full object-cover" />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-gray-500">
+                        <div className="w-full h-full flex items-center justify-center text-3xl md:text-4xl font-bold text-gray-500">
                             {profile.username?.[0]?.toUpperCase()}
                         </div>
                     )}
                 </div>
 
-                <div className="flex-1 text-center md:text-left">
+                <div className="flex-1 text-center md:text-left w-full">
                     <div className="flex flex-col md:flex-row items-center gap-4 mb-4">
-                        <h1 className="text-2xl font-light">{profile.username}</h1>
+                        <h1 className="text-xl md:text-2xl font-light">{profile.username}</h1>
                         {currentUser?.uid === uid ? (
                             <button
                                 onClick={() => setIsEditModalOpen(true)}
-                                className="px-4 py-1.5 bg-gray-800 rounded font-bold text-sm hover:bg-gray-700"
+                                className="px-4 py-1.5 bg-gray-800 rounded font-bold text-sm hover:bg-gray-700 w-full md:w-auto"
                             >
                                 Edit Profile
                             </button>
                         ) : (
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 w-full md:w-auto justify-center">
                                 <button
                                     onClick={handleFollow}
-                                    className={`px-6 py-1.5 rounded font-bold text-sm transition-colors ${isFollowing ? "bg-gray-800 text-white" : "bg-blue-500 text-white hover:bg-blue-600"
+                                    className={`px-6 py-1.5 rounded font-bold text-sm transition-colors flex-1 md:flex-none ${isFollowing ? "bg-gray-800 text-white" : "bg-blue-500 text-white hover:bg-blue-600"
                                         }`}
                                 >
                                     {isFollowing ? "Following" : "Follow"}
                                 </button>
                                 <button
                                     onClick={handleMessage}
-                                    className="px-6 py-1.5 bg-gray-800 text-white rounded font-bold text-sm hover:bg-gray-700"
+                                    className="px-6 py-1.5 bg-gray-800 text-white rounded font-bold text-sm hover:bg-gray-700 flex-1 md:flex-none"
                                 >
                                     Message
                                 </button>
                             </div>
                         )}
-                        {currentUser?.uid === uid && <Settings className="cursor-pointer" />}
+                        {currentUser?.uid === uid && <Settings className="cursor-pointer hidden md:block" />}
                     </div>
 
-                    <div className="flex justify-center md:justify-start gap-8 mb-4">
-                        <span><span className="font-bold">{posts.length}</span> posts</span>
-                        <span><span className="font-bold">{profile.followers?.length || 0}</span> followers</span>
-                        <span><span className="font-bold">{profile.following?.length || 0}</span> following</span>
+                    <div className="flex justify-around md:justify-start gap-8 mb-4 border-t border-b border-gray-800 py-4 md:py-0 md:border-none">
+                        <div className="flex flex-col md:flex-row items-center gap-1">
+                            <span className="font-bold">{posts.length}</span>
+                            <span className="text-gray-500 md:text-white">posts</span>
+                        </div>
+                        <div className="flex flex-col md:flex-row items-center gap-1">
+                            <span className="font-bold">{profile.followers?.length || 0}</span>
+                            <span className="text-gray-500 md:text-white">followers</span>
+                        </div>
+                        <div className="flex flex-col md:flex-row items-center gap-1">
+                            <span className="font-bold">{profile.following?.length || 0}</span>
+                            <span className="text-gray-500 md:text-white">following</span>
+                        </div>
                     </div>
 
-                    <div>
+                    <div className="px-4 md:px-0 text-left">
                         <div className="font-bold">{profile.displayName}</div>
-                        <div className="whitespace-pre-wrap">{profile.bio}</div>
+                        <div className="whitespace-pre-wrap text-sm">{profile.bio}</div>
                     </div>
                 </div>
             </div>
